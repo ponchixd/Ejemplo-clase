@@ -1,2 +1,2 @@
-# Ejemplo-clase
-un ejemplo para fundamentos de programación
+# Ejemplo del laboratorio
+un ejemplo para fundamentos de programación.
