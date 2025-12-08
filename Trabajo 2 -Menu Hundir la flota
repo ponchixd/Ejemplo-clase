@@ -1,0 +1,161 @@
+#include <stdio.h>
+
+// Primero inicializo todo el tablero a 0.
+// Uso dos bucles for anidados:
+// El for de 'i' recorre las filas del tablero (de la 0 a la 11, 12 en total).
+// El for de 'j' recorre las columnas dentro de cada fila.
+// De esta forma paso por cada posición [i][j] de la matriz.
+// Pongo un 0 en cada casilla para indicar que ahí no hay ningún barco.
+void crear_tablero_fijo(int tablero[12][12]) {
+    // Inicializar tablero a 0
+    for (int i = 0; i < 12; i++) {          //recorro las 12 filas
+        for (int j = 0; j < 12; j++) {      //recorro las 12 columnas
+            tablero[i][j] = 0;              //dejo todo a 0 = agua
+        }
+    }
+
+    // Aquí coloco el Portaviones.  
+    // He decidido ponerlo en la fila 0, empezando desde la columna 0 hasta la 3.
+    // Como el Portaviones ocupa 4 casillas, uso un bucle que se repite 4 veces.
+    // El valor 1  indica que esa posición pertenece a un barco.
+    // En una versión jugable, donde el jugador elija posiciones, usaría una lógica similar.
+    // Me refiero a que volvería a recorrer el tablero para colocar el barco casilla por casilla,
+    // pero antes de ponerlo comprobaría si esa casilla ya tiene un 1 (o cualquier otro número distinto de 0).
+    // Si el valor fuese 1 significaría que ya hay parte de otro barco en esa posición.
+    // En ese caso, usaría un valor como 2 para indicar un error, porque no sería válido
+    // que los barcos se solapen unos encima de otros.
+    // Como en esta práctica el tablero está fijo y no hay interacción del usuario,
+    // no hace falta comprobarlo, pero dejo el comentario para explicar
+    // cómo lo ampliaría para hacerlo jugable teniendo en cuenta que la siguiente practica es eso.
+    for (int i = 0; i < 4; i++) {
+        tablero[0][i] = 1;
+    }
+
+    // Colocar Crucero 1 (horizontal) siguendo el mismo proceso logico
+    for (int i = 0; i < 3; i++) {
+        tablero[1][i] = 1;
+    }
+
+    // Colocar Crucero 2 (horizontal)
+    for (int i = 0; i < 3; i++) {
+        tablero[2][i] = 1;
+    }
+
+    // Colocar Patrullero 1 (horizontal)
+    for (int i = 0; i < 2; i++) {
+        tablero[3][i] = 1;
+    }
+
+    // Colocar Patrullero 2 (horizontal)
+    for (int i = 0; i < 2; i++) {
+        tablero[4][i] = 1;
+    }
+
+    // Colocar Patrullero 3 (horizontal)
+    for (int i = 0; i < 2; i++) {
+        tablero[5][i] = 1;
+    }
+}
+
+// Función para mostrar el tablero en pantalla
+void mostrar_tablero(int tablero[12][12]) {
+    printf("Tablero:\n");
+    for (int i = 0; i < 12; i++) {
+        for (int j = 0; j < 12; j++) {
+            printf("%d ", tablero[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");  // Genero una linea en blanco para separar tableros
+}
+
+// Función principal con el menú
+int main() {
+    int opcion;  // Variable para almacenar la opción elegida por el usuario
+    
+    // Bucle do-while para el menú
+    // uso un do porque asi siempre se ejecutara una primera vez
+    // ademas que puedo definir que se ejecute hasta que se cumpla la condición que quiero
+    do {
+        // Imprimimos el menú en pantalla con las opciones para el usuario
+        printf("----------------------------------------\n");
+        printf("          HUNDIR LA FLOTA\n");
+        printf("----------------------------------------\n");
+        printf("1. Jugar\n");
+        printf("2. Informacion\n");
+        printf("3. Mejores puntuaciones\n");
+        printf("4. Salir\n");
+        printf("----------------------------------------\n");
+        printf("Elige una opcion (1-4): ");
+        
+        // Leemos la opción del usuario
+        scanf("%d", &opcion);
+        
+        // Manejo de opciones con switch
+        // He usado switch porque me parece mas limpio y escalable
+        // que una estructura de if y else
+        switch (opcion) {
+            case 1:
+                // Opción Jugar: Crear y mostrar tableros fijos
+                {
+                    int tablero_jugador[12][12];
+                    int tablero_oponente[12][12];
+                    
+                    // Crear tableros idénticos con posiciones fijas
+                    crear_tablero_fijo(tablero_jugador);
+                    crear_tablero_fijo(tablero_oponente);
+                    
+                    // Mostrar tableros
+                    printf("\nTablero del Jugador:\n");
+                    mostrar_tablero(tablero_jugador);
+                    
+                    printf("Tablero del Oponente:\n");
+                    mostrar_tablero(tablero_oponente);
+                    
+                    printf("Pulsa Enter para volver al menu...\n");
+                    while (getchar() != '\n');  // Realmente vuelves al menu con cualquier tecla. He llegado a la conclusión de que es porque \n lo detecta como un enter.
+                    getchar();  // Me gusta que sea asi porque hes mas facil volver al menu ahora, pero en una version jugable tendria que cambiarlo.
+                }
+                break;
+            
+            case 2:
+                // Mostramos las reglas del juego con un print.
+                printf("\n----- REGLAS DE HUNDIR LA FLOTA -----\n");
+                printf("Cada jugador tiene un tablero de 12x12 casillas.\n");
+                printf("Coloca tus barcos: 1 portaviones (4 casillas), 2 cruceros (3 cada uno), 3 patrulleros (2 cada uno).\n");
+                printf("Por turnos, elige una posicion para disparar al tablero enemigo.\n");
+                printf("Si aciertas a un barco, es 'tocado'; si no, 'agua'.\n");
+                printf("Gana quien hunda todos los barcos del rival primero.\n");
+                printf("---------------------------------------\n");
+                printf("Pulsa Enter para volver al menu...\n");
+                while (getchar() != '\n');  // 
+                getchar();  
+                break;
+            
+            case 3:
+                // Opción Mejores puntuaciones (aún no implementada)
+                printf("\nLa opcion de mejores puntuaciones no esta implementada todavia.\n");
+                printf("Pulsa Enter para volver al menu...\n");
+                while (getchar() != '\n');  
+                getchar();  
+                break;
+            
+            case 4:
+                // Opción Salir, como tal esta opción solo muestra un print, porque la idea es que sea la condición para salir del bucle while
+                printf("\n¡Gracias por jugar! Hasta pronto.\n");
+                break;   
+            
+            default:
+                // Para cualquier otra opción hacemos print de este mensaje es la default pues es imposible conteplar todas las opciones 
+                // que el usuario puede hacer, asique definimos las que si comteplamos y cualquier otra cosa es un error
+                printf("\nOpcion no valida. Elige entre 1 y 4.\n");
+                printf("Pulsa Enter para continuar...\n");
+                while (getchar() != '\n');  
+                getchar();  
+                break;
+        }
+    } while (opcion != 4);  // Repetimos mientras no sea 4, que es la opción de salir. Con este lagoca no hace falta hacer una función para salir
+    // desconozco si a mayor complejidad este sistema es funcional, pero demomento si lo es.
+    
+    return 0;
+}
