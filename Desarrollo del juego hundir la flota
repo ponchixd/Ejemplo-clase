@@ -1,0 +1,365 @@
+//Ha sido usado chat gpt para ayudar con la randomización y algo con las puntuaciones.
+
+//Stdlib.h sirve para funciones de randomización como rand() o srand().
+//Time.h usa la hora del sistema para randomizar.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+
+
+
+//Definimos el tamaño del tablero a 12x12
+#define TAM 12
+#define MAX_NOMBRE 20
+
+typedef struct {
+    char nombre[MAX_NOMBRE];
+    int puntuacion;
+    char fecha[20]; // formato: DD/MM/YYYY HH:MM
+} Registro;
+
+
+// ================= PROTOTIPOS =================
+int puede_colocar(int tablero[TAM][TAM], int fila, int col, int tam, char dir);
+void colocar_barcos(int tablero[TAM][TAM], int fila, int col, int tam, char dir);
+void colocar_barcos_jugador(int tablero[TAM][TAM]);
+void inicializar_tablero(int tablero[TAM][TAM]);
+void crear_tablero_cpu(int tablero[TAM][TAM]);
+void mostrar_tablero_jugador(int tablero[TAM][TAM]);
+void mostrar_tablero_oculto(int tablero[TAM][TAM]);
+int quedan_barcos(int tablero[TAM][TAM]);
+void disparo_jugador(int tablero[TAM][TAM]);
+void disparo_cpu(int tablero[TAM][TAM]);
+void cargar_puntuaciones(Registro mejores[]);
+void guardar_puntuaciones(Registro mejores[]);
+void actualizarMejores(Registro mejores[], int puntuacion);
+void mostrarMejores(Registro mejores[]);
+void jugar(void);
+
+// ================= VARIABLES GLOBALES =================
+int puntuacion = 0;
+int fallos = 0;
+Registro mejores[3];
+
+
+// ================= FUNCIONES =================
+
+//Primero comprobamos si se puede colocar el barco
+int puede_colocar(int tablero[TAM][TAM], int fila, int col, int tam, char dir) {
+    if (dir == 'H') {
+        if (col + tam > TAM) return 0;
+        for (int i = 0; i < tam; i++)
+            if (tablero[fila][col + i] != 0)
+                return 0;
+    } else if (dir == 'V') {
+        if (fila + tam > TAM) return 0;
+        for (int i = 0; i < tam; i++)
+            if (tablero[fila + i][col] != 0)
+                return 0;
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
+//Colocamos los barcos (barco=1 agua=0)
+void colocar_barcos(int tablero[TAM][TAM], int fila, int col, int tam, char dir) {
+    if (dir == 'H')
+        for (int i = 0; i < tam; i++)
+            tablero[fila][col + i] = 1;
+    else
+        for (int i = 0; i < tam; i++)
+            tablero[fila + i][col] = 1;
+}
+
+//Informamos al jugador de los barcos que debe colocar
+void colocar_barcos_jugador(int tablero[TAM][TAM]) {
+    int barcos[] = {4, 3, 3, 2, 2, 2};
+    char *nombres[] = {
+        "Portaviones (4)",
+        "Crucero 1 (3)",
+        "Crucero 2 (3)",
+        "Patrullero 1 (2)",
+        "Patrullero 2 (2)",
+        "Patrullero 3 (2)"
+    };
+
+    int fila, col;
+    char dir;
+
+    for (int i = 0; i < 6; i++) {
+        mostrar_tablero_jugador(tablero);
+        printf("\nColocando %s\n", nombres[i]);
+
+        do {
+    printf("Fila inicial: ");
+    scanf("%d", &fila);
+    printf("Columna inicial: ");
+    scanf("%d", &col);
+    printf("Direccion (H/V): ");
+    scanf(" %c", &dir);
+
+    if (!puede_colocar(tablero, fila, col, barcos[i], dir)) {
+        printf("Posicion no valida. Intentalo de nuevo.\n");
+    }
+
+} while (!puede_colocar(tablero, fila, col, barcos[i], dir));
+
+
+        colocar_barcos(tablero, fila, col, barcos[i], dir);
+    }
+}
+
+// inicializamos tableros
+void inicializar_tablero(int tablero[TAM][TAM]) {
+    for (int i = 0; i < TAM; i++)
+        for (int j = 0; j < TAM; j++)
+            tablero[i][j] = 0;
+}
+
+//creamos tablero de la cpu y colocamos sus barcos aleatoriamente
+void crear_tablero_cpu(int tablero[TAM][TAM]) {
+    inicializar_tablero(tablero);
+
+    int barcos[] = {4, 3, 3, 2, 2, 2};
+
+    for (int b = 0; b < 6; b++) {
+        int fila, col;
+        char dir;
+        do {
+            fila = rand() % TAM;
+            col = rand() % TAM;
+            dir = (rand() % 2) ? 'H' : 'V';
+        } while (!puede_colocar(tablero, fila, col, barcos[b], dir));
+
+        colocar_barcos(tablero, fila, col, barcos[b], dir);
+    }
+}
+
+//mostramos el tablero del jugador
+void mostrar_tablero_jugador(int tablero[TAM][TAM]) {
+    printf("   ");
+    for (int i = 0; i < TAM; i++) printf("%2d ", i);
+    printf("\n");
+
+    for (int i = 0; i < TAM; i++) {
+        printf("%2d ", i);
+        for (int j = 0; j < TAM; j++)
+            printf("%2d ", tablero[i][j]);
+        printf("\n");
+    }
+}
+
+//Mostramos el tablero de la CPU oculto
+void mostrar_tablero_oculto(int tablero[TAM][TAM]) {
+    printf("   ");
+    for (int i = 0; i < TAM; i++) printf("%2d ", i);
+    printf("\n");
+
+    for (int i = 0; i < TAM; i++) {
+        printf("%2d ", i);
+        for (int j = 0; j < TAM; j++) {
+            if (tablero[i][j] == 2 || tablero[i][j] == 3)
+                printf("%2d ", tablero[i][j]);
+            else
+                printf(" . ");
+        }
+        printf("\n");
+    }
+}
+
+//Hacemos que compruebe si quedan barcos
+int quedan_barcos(int tablero[TAM][TAM]) {
+    for (int i = 0; i < TAM; i++)
+        for (int j = 0; j < TAM; j++)
+            if (tablero[i][j] == 1)
+                return 1;
+    return 0;
+}
+
+//El jugador dispara
+void disparo_jugador(int tablero[TAM][TAM]) {
+    int fila, col;
+
+    do {
+        printf("Fila: ");
+        scanf("%d", &fila);
+        printf("Columna: ");
+        scanf("%d", &col);
+    } while (fila < 0 || fila >= TAM || col < 0 || col >= TAM);
+
+    if (tablero[fila][col] == 1) {
+        tablero[fila][col] = 3;
+        puntuacion++;
+        printf("¡Tocado!\n");
+    } else if (tablero[fila][col] == 0) {
+    tablero[fila][col] = 2;
+    fallos++;
+    printf("Agua...\n");
+}
+ else {
+        printf("Blanco ya atacado.\n");
+    }
+}
+
+//La Cpu dispara aleatoriamente
+void disparo_cpu(int tablero[TAM][TAM]) {
+    int fila, col;
+
+    do {
+        fila = rand() % TAM;
+        col = rand() % TAM;
+    } while (tablero[fila][col] == 2 || tablero[fila][col] == 3);
+
+    printf("La CPU dispara a (%d, %d)\n", fila, col);
+
+    if (tablero[fila][col] == 1) {
+        tablero[fila][col] = 3;
+        printf("¡La CPU le ha dado a barco!\n");
+    } else {
+        tablero[fila][col] = 2;
+        printf("La CPU falla.\n");
+    }
+}
+
+//Puntuaciones
+void cargar_puntuaciones(Registro mejores[]) {
+    FILE *f = fopen("puntuaciones.txt", "r");
+    if (f != NULL) {
+        for (int i = 0; i < 3; i++) {
+            fscanf(f, "%19s %d %19[^\n]\n",
+                   mejores[i].nombre,
+                   &mejores[i].puntuacion,
+                   mejores[i].fecha);
+        }
+        fclose(f);
+    } else {
+        for (int i = 0; i < 3; i++) {
+            strcpy(mejores[i].nombre, "---");
+            mejores[i].puntuacion = 0;
+            strcpy(mejores[i].fecha, "---");
+        }
+    }
+}
+
+void guardar_puntuaciones(Registro mejores[]) {
+    FILE *f = fopen("puntuaciones.txt", "w");
+    for (int i = 0; i < 3; i++) {
+        fprintf(f, "%s %d %s\n",
+                mejores[i].nombre,
+                mejores[i].puntuacion,
+                mejores[i].fecha);
+    }
+    fclose(f);
+}
+
+void obtener_fecha(char fecha[]) {
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    strftime(fecha, 20, "%d/%m/%Y %H:%M", tm_info);
+}
+
+
+void actualizarMejores(Registro mejores[], int puntuacion) {
+    Registro nuevo;
+    nuevo.puntuacion = puntuacion;
+
+    printf("Introduce tu nombre: ");
+    scanf("%19s", nuevo.nombre);
+
+    obtener_fecha(nuevo.fecha);
+
+    for (int i = 0; i < 3; i++) {
+        if (puntuacion > mejores[i].puntuacion) {
+            for (int j = 2; j > i; j--)
+                mejores[j] = mejores[j - 1];
+
+            mejores[i] = nuevo;
+            break;
+        }
+    }
+}
+
+
+void mostrarMejores(Registro mejores[]) {
+    printf("=== Mejores puntuaciones ===\n");
+    for (int i = 0; i < 3; i++) {
+        printf("%d. %s - %d puntos (%s)\n",
+               i + 1,
+               mejores[i].nombre,
+               mejores[i].puntuacion,
+               mejores[i].fecha);
+    }
+}
+
+
+// ================= JUEGO =================
+void jugar() {
+    int tablero_jugador[TAM][TAM];
+    int tablero_cpu[TAM][TAM];
+
+    puntuacion = 0;
+    fallos = 0;
+    inicializar_tablero(tablero_jugador);
+    crear_tablero_cpu(tablero_cpu);
+
+    colocar_barcos_jugador(tablero_jugador);
+
+    while (1) {
+        printf("\n--- TU TABLERO ---\n");
+        mostrar_tablero_jugador(tablero_jugador);
+
+        printf("\n--- TABLERO ENEMIGO ---\n");
+        mostrar_tablero_oculto(tablero_cpu);
+
+        disparo_jugador(tablero_cpu);
+        if (!quedan_barcos(tablero_cpu)) {
+    int maxFallos = 128;
+
+    puntuacion = 1000 - (fallos * 999) / maxFallos;
+
+    if (puntuacion < 1)
+        puntuacion = 1;
+
+    printf("\n¡¡HAS GANADO!!\n");
+    break;
+}
+
+
+        disparo_cpu(tablero_jugador);
+        if (!quedan_barcos(tablero_jugador)) {
+            printf("\nHAS PERDIDO...\n");
+            break;
+        }
+    }
+
+    actualizarMejores(mejores, puntuacion);
+    guardar_puntuaciones(mejores);
+
+    printf("\nPulsa Enter para volver al menu...");
+    while (getchar() != '\n');
+    getchar();
+}
+
+// ================= MAIN =================
+int main() {
+    srand(time(NULL));
+    cargar_puntuaciones(mejores);
+
+    int opcion;
+    do {
+        printf("\n1. Jugar\n2. Mejores puntuaciones\n3. Información\n4. Salir\n");
+        scanf("%d", &opcion);
+
+        switch (opcion) {
+            case 1: jugar(); break;
+            case 2: mostrarMejores(mejores); break;
+            case 3: printf("Juego Hundir la Flota 12x12\n"); break;
+        }
+    } while (opcion != 4);
+
+    return 0;
+}
